@@ -5,11 +5,15 @@
     Dim language As String = "EN"
     Dim Shortcuts As String = "2"
     Dim curdrive As String = My.Application.Info.DirectoryPath
-    Dim allowexit As Boolean = False
     Dim allowmorethanone As Boolean = False
+    Dim errorfound As Boolean = CHeckforerrors()
     Sub Main()
-
-
+        If errorfound Then
+            Console.WriteLine("Minimums to run Dungeon Fighter online Failed")
+            Exit Sub
+        Else
+            Console.WriteLine("Minimums to run Dungeon Fighter online Passed")
+        End If
         If My.Application.CommandLineArgs.Count > 0 Then
             If My.Application.CommandLineArgs.Contains("/?") Or My.Application.CommandLineArgs.Contains("-?") Or My.Application.CommandLineArgs.Contains("/h") Or My.Application.CommandLineArgs.Contains("-h") Then
                 Console.WriteLine(My.Application.Info.AssemblyName)
@@ -85,14 +89,75 @@
 
         Else
             Console.WriteLine("DFO launcher not found")
-            allowexit = True
+
         End If
 
-        While Not allowexit
 
-        End While
 
     End Sub
+
+    Function CHeckforerrors() As Boolean
+        Dim viddetail As New System.Management.ManagementObjectSearcher("select * from Win32_VideoController")
+        Dim retval As Boolean = False
+
+        Try
+            Dim cx As Management.ManagementObjectCollection = viddetail.Get()
+            Dim cvid As Management.ManagementObject = cx(0)
+
+            If cvid.Properties.Item("AdapterRAM").Value < (2 * Math.Pow(1024, 3)) Then
+                Console.WriteLine(cvid.Properties.Item("Name").Value & " only has " & (cvid.Properties.Item("AdapterRAM").Value / Math.Pow(1024, 3)) & " GB available ram" & vbCrLf & "2 GB required to run game ")
+                retval = True
+            End If
+
+
+        Catch ex As Exception
+
+        End Try
+
+
+        If My.Computer.Info.OSFullName.ToUpper.IndexOf("MICROSOFT WINDOWS") = -1 Then
+            Console.WriteLine("Found os : " & My.Computer.Info.OSFullName)
+            Console.WriteLine("Game cannot run under this os")
+            retval = True
+        End If
+
+        If Integer.Parse(My.Computer.Info.OSVersion.Split(".")(2)) < 7601 Then
+            Console.WriteLine("Found os : " & My.Computer.Info.OSFullName)
+            Console.WriteLine("Game cannot run under this os")
+            retval = True
+        End If
+
+        If My.Computer.Info.TotalPhysicalMemory < (2 * Math.Pow(1024, 3)) Then
+            Console.WriteLine("Ram : " & My.Computer.Info.TotalPhysicalMemory / Math.Pow(1024, 3) & " Gb")
+            Console.WriteLine("You Need at least 2 Gb ram to run game")
+            retval = True
+        End If
+
+        If My.Computer.Registry.LocalMachine.OpenSubKey("SOFTWARE\Microsoft\DirectX").GetValue("Version") IsNot Nothing Then
+            Dim dvin As String = My.Computer.Registry.LocalMachine.OpenSubKey("SOFTWARE\Microsoft\DirectX").GetValue("Version")
+            Dim bsr As String() = dvin.Split(".")
+            Dim bx As Integer = Integer.Parse(bsr(0) & bsr(1))
+
+            If bx < 409 Then
+                Console.WriteLine("You Need at least Direct X 9 to run")
+                retval = True
+            End If
+
+        End If
+
+        If My.Computer.Registry.LocalMachine.OpenSubKey("SOFTWARE\Microsoft\Internet Explorer").GetValue("svcVersion") IsNot Nothing Then
+            Dim dvin As String = My.Computer.Registry.LocalMachine.OpenSubKey("SOFTWARE\Microsoft\Internet Explorer").GetValue("svcVersion")
+            Dim bsr As String() = dvin.Split(".")
+            Dim bx As Integer = Integer.Parse(bsr(0))
+
+            If bx < 10 Then
+                Console.WriteLine("You Need at least Internet Explorer 10 to run")
+                retval = True
+            End If
+        End If
+
+        Return retval
+    End Function
 
     Sub cancelExistingDFO()
         If Process.GetProcessesByName("NeopleLauncher").Count > 0 Then
@@ -135,7 +200,7 @@
                 End If
             End If
         End If
-        allowexit = True
+
     End Sub
     Function uninstallDFOregkey() As Boolean
         If My.Computer.Registry.CurrentUser.OpenSubKey("Software\Neople_DFO") IsNot Nothing Then
