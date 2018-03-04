@@ -104,8 +104,8 @@
             Dim cx As Management.ManagementObjectCollection = viddetail.Get()
             Dim cvid As Management.ManagementObject = cx(0)
 
-            If cvid.Properties.Item("AdapterRAM").Value < (2 * Math.Pow(1024, 3)) Then
-                Console.WriteLine(cvid.Properties.Item("Name").Value & " only has " & (cvid.Properties.Item("AdapterRAM").Value / Math.Pow(1024, 3)) & " GB available ram" & vbCrLf & "2 GB required to run game ")
+            If cvid.Properties.Item("AdapterRAM").Value < (512 * Math.Pow(1024, 2)) Then
+                Console.WriteLine(cvid.Properties.Item("Name").Value & " only has " & (cvid.Properties.Item("AdapterRAM").Value / Math.Pow(1024, 2)) & " MB available ram" & vbCrLf & "512 MB required to run game ")
                 retval = True
             End If
 
