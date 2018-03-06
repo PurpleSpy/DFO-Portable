@@ -7,6 +7,7 @@
     Dim curdrive As String = My.Application.Info.DirectoryPath
     Dim allowmorethanone As Boolean = False
     Dim errorfound As Boolean = CHeckforerrors()
+    Dim appdatafolder As IO.DirectoryInfo = New IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)).Parent
     Sub Main()
         If errorfound Then
             Console.WriteLine("Minimums to run Dungeon Fighter online Failed")
@@ -62,16 +63,42 @@
                     Console.Write("Dfo Install location changed")
                     Exit Sub
                 End If
+
+                If IO.File.Exists(curdrive & "\DFO_UNIV.cfg") Then
+                    If IO.File.Exists(appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg") Then
+                        If IO.File.Exists(appdatafolder.FullName & "\locallow\dnf\DFO_UNIVBACK.BACK") Then
+                            IO.File.Delete(appdatafolder.FullName & "\locallow\dnf\DFO_UNIVBACK.BACK")
+                        End If
+                        My.Computer.FileSystem.RenameFile(appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg", "DFO_UNIVBACK.BACK")
+                        End If
+                        Try
+                        My.Computer.FileSystem.CopyFile(curdrive & "\DFO_UNIV.cfg", appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg", True)
+                    Catch ex As Exception
+
+                    End Try
+                End If
             Else
                 Dim xs As Microsoft.Win32.RegistryKey = My.Computer.Registry.CurrentUser.OpenSubKey("Software", True).CreateSubKey("Neople_DFO", True)
                 xs.SetValue("Language", language)
                 xs.SetValue("NumShortcuts", Shortcuts)
                 xs.SetValue("Path", curdrive)
-                If My.Application.CommandLineArgs.Contains("/c") Or My.Application.CommandLineArgs.Contains("-c") Then
-                    Console.Write("Dfo Installed")
-                    Exit Sub
-                Else
-                    Console.Write("Dfo Installed Temporarily")
+
+                If IO.File.Exists(curdrive & "\DFO_UNIV.cfg") Then
+                    If Not IO.Directory.Exists(appdatafolder.FullName & "\locallow\dnf") Then
+                        IO.Directory.CreateDirectory(appdatafolder.FullName & "\locallow\dnf")
+                    End If
+                    Try
+                        My.Computer.FileSystem.CopyFile(curdrive & "\DFO_UNIV.cfg", appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg", True)
+                    Catch ex As Exception
+
+                    End Try
+
+                End If
+                    If My.Application.CommandLineArgs.Contains("/c") Or My.Application.CommandLineArgs.Contains("-c") Then
+                        Console.Write("Dfo Installed")
+                        Exit Sub
+                    Else
+                        Console.Write("Dfo Installed Temporarily")
                 End If
 
             End If
@@ -185,15 +212,42 @@
     End Sub
 
     Sub EndCLeanup()
+
         Console.Write("Cleanup Phase")
+        If IO.File.Exists(appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg") Then
+
+            Try
+                My.Computer.FileSystem.CopyFile(appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg", curdrive & "\DFO_UNIV.cfg", True)
+
+            Catch ex As Exception
+
+            End Try
+        End If
         If dfowasinstalled Then
             If olddfoloc <> "" Then
+
+                Try
+                    If IO.File.Exists(appdatafolder.FullName & "\DFO_UNIV.cfg") Then
+                        IO.File.Delete(appdatafolder.FullName & "\DFO_UNIV.cfg")
+                    End If
+
+                    My.Computer.FileSystem.RenameFile(appdatafolder.FullName & "\locallow\dnf\DFO_UNIVBACK.BACK", "DFO_UNIV.cfg")
+
+                    If IO.File.Exists(appdatafolder.FullName & "\locallow\dnf\DFO_UNIVBACK.BACK") Then
+                        IO.File.Delete(appdatafolder.FullName & "\locallow\dnf\DFO_UNIVBACK.BACK")
+                    End If
+                Catch ex As Exception
+
+                End Try
+
+
                 My.Computer.Registry.CurrentUser.OpenSubKey("Software\Neople_DFO", True).SetValue("Path", olddfoloc)
             End If
 
         Else
             If Not leaveInstalled Then
                 If uninstallDFOregkey() Then
+                    My.Computer.FileSystem.DeleteDirectory(appdatafolder.FullName & "\locallow\dnf", FileIO.DeleteDirectoryOption.DeleteAllContents)
                     Console.Write("DFO removed")
                 Else
                     Console.Write("DFO error removing")
