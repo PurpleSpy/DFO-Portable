@@ -6,15 +6,17 @@
     Dim Shortcuts As String = "2"
     Dim curdrive As String = My.Application.Info.DirectoryPath
     Dim allowmorethanone As Boolean = False
-    Dim errorfound As Boolean = CHeckforerrors()
+    Dim errorfound As Boolean = False
     Dim appdatafolder As IO.DirectoryInfo = New IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)).Parent
     Sub Main()
+        errorfound = CHeckforerrors()
         If errorfound Then
             Console.WriteLine("Minimums to run Dungeon Fighter online Failed")
             Exit Sub
         Else
             Console.WriteLine("Minimums to run Dungeon Fighter online Passed")
         End If
+
         If My.Application.CommandLineArgs.Count > 0 Then
             If My.Application.CommandLineArgs.Contains("/?") Or My.Application.CommandLineArgs.Contains("-?") Or My.Application.CommandLineArgs.Contains("/h") Or My.Application.CommandLineArgs.Contains("-h") Then
                 Console.WriteLine(My.Application.Info.AssemblyName)
@@ -53,70 +55,93 @@
 
         End If
 
-        If IO.File.Exists(curdrive & "\NeopleLauncher.exe") Then
-            If My.Computer.Registry.CurrentUser.OpenSubKey("Software\Neople_DFO") IsNot Nothing Then
-                dfowasinstalled = True
-                olddfoloc = My.Computer.Registry.CurrentUser.OpenSubKey("Software\Neople_DFO", True).GetValue("Path")
-                My.Computer.Registry.CurrentUser.OpenSubKey("Software\Neople_DFO", True).SetValue("Path", curdrive)
-                Console.WriteLine("Dfo was already installed temp changing install location")
-                If My.Application.CommandLineArgs.Contains("/c") Or My.Application.CommandLineArgs.Contains("-c") Then
-                    Console.Write("Dfo Install location changed")
-                    Exit Sub
-                End If
 
-                If IO.File.Exists(curdrive & "\DFO_UNIV.cfg") Then
-                    If IO.File.Exists(appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg") Then
-                        If IO.File.Exists(appdatafolder.FullName & "\locallow\dnf\DFO_UNIVBACK.BACK") Then
-                            IO.File.Delete(appdatafolder.FullName & "\locallow\dnf\DFO_UNIVBACK.BACK")
-                        End If
-                        My.Computer.FileSystem.RenameFile(appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg", "DFO_UNIVBACK.BACK")
+
+        If IO.File.Exists(curdrive & "\NeopleLauncher.exe") Then
+
+            If IO.File.Exists(curdrive & "\steam_appid.txt") Then
+                Console.WriteLine("Portable Version cannot be Steam version of game")
+                Console.WriteLine("Go to https://www.dfoneople.com/")
+                Console.WriteLine("Download game through the installer then copy that folder on removable media")
+
+                Try
+                    Process.Start("https://www.dfoneople.com/")
+                Catch ex As Exception
+
+                End Try
+                Exit Sub
+            End If
+
+            If My.Computer.Registry.CurrentUser.OpenSubKey("Software\Neople_DFO") IsNot Nothing Then
+                    dfowasinstalled = True
+                    olddfoloc = My.Computer.Registry.CurrentUser.OpenSubKey("Software\Neople_DFO", True).GetValue("Path")
+                    My.Computer.Registry.CurrentUser.OpenSubKey("Software\Neople_DFO", True).SetValue("Path", curdrive)
+                    Console.WriteLine("Dfo was already installed temp changing install location")
+                    If My.Application.CommandLineArgs.Contains("/c") Or My.Application.CommandLineArgs.Contains("-c") Then
+                        Console.Write("Dfo Install location changed")
+                        Exit Sub
+                    End If
+
+                    If IO.File.Exists(curdrive & "\DFO_UNIV.cfg") Then
+                        If IO.File.Exists(appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg") Then
+                            If IO.File.Exists(appdatafolder.FullName & "\locallow\dnf\DFO_UNIVBACK.BACK") Then
+                                IO.File.Delete(appdatafolder.FullName & "\locallow\dnf\DFO_UNIVBACK.BACK")
+                            End If
+                            My.Computer.FileSystem.RenameFile(appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg", "DFO_UNIVBACK.BACK")
                         End If
                         Try
-                        My.Computer.FileSystem.CopyFile(curdrive & "\DFO_UNIV.cfg", appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg", True)
-                    Catch ex As Exception
+                            My.Computer.FileSystem.CopyFile(curdrive & "\DFO_UNIV.cfg", appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg", True)
+                        Catch ex As Exception
 
-                    End Try
-                End If
-            Else
-                Dim xs As Microsoft.Win32.RegistryKey = My.Computer.Registry.CurrentUser.OpenSubKey("Software", True).CreateSubKey("Neople_DFO", True)
-                xs.SetValue("Language", language)
-                xs.SetValue("NumShortcuts", Shortcuts)
-                xs.SetValue("Path", curdrive)
-
-                If IO.File.Exists(curdrive & "\DFO_UNIV.cfg") Then
-                    If Not IO.Directory.Exists(appdatafolder.FullName & "\locallow\dnf") Then
-                        IO.Directory.CreateDirectory(appdatafolder.FullName & "\locallow\dnf")
+                        End Try
                     End If
-                    Try
-                        My.Computer.FileSystem.CopyFile(curdrive & "\DFO_UNIV.cfg", appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg", True)
-                    Catch ex As Exception
+                Else
+                    Dim xs As Microsoft.Win32.RegistryKey = My.Computer.Registry.CurrentUser.OpenSubKey("Software", True).CreateSubKey("Neople_DFO", True)
+                    xs.SetValue("Language", language)
+                    xs.SetValue("NumShortcuts", Shortcuts)
+                    xs.SetValue("Path", curdrive)
 
-                    End Try
+                    If IO.File.Exists(curdrive & "\DFO_UNIV.cfg") Then
+                        If Not IO.Directory.Exists(appdatafolder.FullName & "\locallow\dnf") Then
+                            IO.Directory.CreateDirectory(appdatafolder.FullName & "\locallow\dnf")
+                        End If
+                        Try
+                            My.Computer.FileSystem.CopyFile(curdrive & "\DFO_UNIV.cfg", appdatafolder.FullName & "\locallow\dnf\DFO_UNIV.cfg", True)
+                        Catch ex As Exception
 
-                End If
+                        End Try
+
+                    End If
                     If My.Application.CommandLineArgs.Contains("/c") Or My.Application.CommandLineArgs.Contains("-c") Then
                         Console.Write("Dfo Installed")
                         Exit Sub
                     Else
                         Console.Write("Dfo Installed Temporarily")
+                    End If
+
                 End If
 
-            End If
+                If Not allowmorethanone Then
+                    cancelExistingDFO()
+                End If
 
-            If Not allowmorethanone Then
-                cancelExistingDFO()
-            End If
+                Dim bxe As New Process
+                bxe.StartInfo.FileName = curdrive & "\NeopleLauncher.exe"
+                bxe.Start()
+                Console.WriteLine("Starting DFO")
+                Threading.Thread.Sleep(5000)
+                EndCLeanup()
 
-            Dim bxe As New Process
-            bxe.StartInfo.FileName = curdrive & "\NeopleLauncher.exe"
-            bxe.Start()
-            Console.WriteLine("Starting DFO")
-            Threading.Thread.Sleep(5000)
-            EndCLeanup()
+            Else
+                Console.WriteLine("DFO launcher not found")
+            Console.WriteLine("Go to https://www.dfoneople.com/")
+            Console.WriteLine("Download game through the installer then copy that folder on removable media")
 
-        Else
-            Console.WriteLine("DFO launcher not found")
+            Try
+                Process.Start("https://www.dfoneople.com/")
+            Catch ex As Exception
 
+            End Try
         End If
 
 
@@ -142,23 +167,40 @@
         End Try
 
 
-        If My.Computer.Info.OSFullName.ToUpper.IndexOf("MICROSOFT WINDOWS") = -1 Then
-            Console.WriteLine("Found os : " & My.Computer.Info.OSFullName)
-            Console.WriteLine("Game cannot run under this os")
-            retval = True
-        End If
 
-        If Integer.Parse(My.Computer.Info.OSVersion.Split(".")(2)) < 7601 Then
-            Console.WriteLine("Found os : " & My.Computer.Info.OSFullName)
-            Console.WriteLine("Game cannot run under this os")
-            retval = True
-        End If
 
-        If My.Computer.Info.TotalPhysicalMemory < (2 * Math.Pow(1024, 3)) Then
-            Console.WriteLine("Ram : " & My.Computer.Info.TotalPhysicalMemory / Math.Pow(1024, 3) & " Gb")
-            Console.WriteLine("You Need at least 2 Gb ram to run game")
-            retval = True
-        End If
+        Try
+                Dim cx As String = My.Computer.Info.OSFullName
+                If cx.ToUpper.IndexOf("MICROSOFT WINDOWS") = -1 Then
+                    Console.WriteLine("Found os : " & My.Computer.Info.OSFullName)
+                    Console.WriteLine("Game cannot run under this os")
+                    retval = True
+                End If
+            Catch ex As Exception
+
+            End Try
+
+
+            Try
+                Dim cx As String() = My.Computer.Info.OSVersion.Split(".")
+
+                If Integer.Parse(cx(2)) < 7601 Then
+                    Console.WriteLine("Found os : " & My.Computer.Info.OSFullName)
+                    Console.WriteLine("Game cannot run under this os")
+                    retval = True
+                End If
+            Catch ex As Exception
+
+            End Try
+
+
+
+            If My.Computer.Info.TotalPhysicalMemory < (2 * Math.Pow(1024, 3)) Then
+                Console.WriteLine("Ram : " & My.Computer.Info.TotalPhysicalMemory / Math.Pow(1024, 3) & " Gb")
+                Console.WriteLine("You Need at least 2 Gb ram to run game")
+                retval = True
+            End If
+
 
         If My.Computer.Registry.LocalMachine.OpenSubKey("SOFTWARE\Microsoft\DirectX").GetValue("Version") IsNot Nothing Then
             Dim dvin As String = My.Computer.Registry.LocalMachine.OpenSubKey("SOFTWARE\Microsoft\DirectX").GetValue("Version")
@@ -182,6 +224,8 @@
                 retval = True
             End If
         End If
+
+
 
         Return retval
     End Function
